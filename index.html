@@ -837,26 +837,50 @@
                   return nodes[nodeId1].value - nodes[nodeId2].value;
               }
 
-              // Group the nodes
+
+
+              var serverOptions = {}
+	      $.ajax({
+    			async: false,
+    			type: 'GET',
+    			url: `/server-options?token=${token}`,
+    			success: function(data) {
+         			serverOptions = data;
+   	 		}
+		});
+
+	      // Group the nodes
               let group = 0;
               const keys = Object.keys(nodes).sort(compareNodeValues);
-              for (let i = 0; i < keys.length; i++) {
-                  const k = keys[i];
-                  if (!nodes[k].group) {
-                      const connectedNodes = tempNetwork.getConnectedNodes(k);
-                      if (connectedNodes.length > 0) {
-                          const node = connectedNodes.max(compareNodeValues);
-                          if (!nodes[node].group) {
-                              nodes[node].group = group;
-                              group += 1;
-                          }
-                          nodes[k].group = nodes[node].group;
-                      } else {
-                          nodes[k].group = group;
-                          group += 1;
-                      }
-                  }
-              }
+	      if(!serverOptions.disable_grouping) {
+             	 for (let i = 0; i < keys.length; i++) {
+              	    const k = keys[i];
+              	    if (!nodes[k].group) {
+              	        const connectedNodes = tempNetwork.getConnectedNodes(k);
+            	          if (connectedNodes.length > 0) {
+               	           const node = connectedNodes.max(compareNodeValues);
+           	               if (!nodes[node].group) {
+               	               nodes[node].group = group;
+           	                   group += 1;
+            	              }
+                	          nodes[k].group = nodes[node].group;
+        	              } else {
+                          	nodes[k].group = group;
+                        	  group += 1;
+                      	}		
+  	      	  }
+              	}
+	      } else {
+	      // get the second degree nodes
+		for (i = 1; i < degrees; i++) {
+    			for (j = 0; j < connectedNodes.length; j++) {
+        			allConnectedNodes = allConnectedNodes.concat(
+	    				globalNetwork.getConnectedNodes(connectedNodes[j])
+        );
+    }
+}
+
+	      }
 
               // Update the dataset
               let updateArray = [];

@@ -200,6 +200,47 @@ or [{ \"id\": \"test\", \"parent\" : \"tags\"  }]"
   :group 'org-roam-server
   :type 'boolean)
 
+
+(defcustom org-roam-server-options nil
+  "Options TODO: Better Docstring"
+  :group 'org-roam-server
+  :type 'string)
+
+(defcustom org-roam-server-color-scheme "default"
+  "Color scheme TODO: Better Docstring"
+  :group 'org-roam-server
+  :type '(choice
+          ("default" :tag "Default color scheme")
+          ("test" :tag "Test color scheme")
+          (function :tag "Custom color scheme function")))
+
+(defun default-color-scheme ()
+  ;; Revert everything to default (Colors, Options etc.)
+  )
+
+(defun test-color-scheme ()
+  ;; Instead of setting org-roam-server-network-vis-options directly, it should change it so that it doesn't affect user's options`
+  (setq org-roam-server-network-vis-options "{\"color\": {\"border\": \"#2B7CE9\", \"background\": \"#97C2FC\", \"highlight\": \"#3f308e\", \"hover\": \"#3f308e\"}}, \"nodes\": {\"mass\": 3, \"font\": {\"size\": 32}, \"color\": {\"border\": \"#D6D5D3\", \"background\": \"#161616\", \"highlight\": \"#3f308e\", \"hover\": \"#3f308e\"}}, \"options\": {\"highlightNearest\": {\"enable\": true, \"degree\": 2}}}"
+        org-roam-server-options (json-encode (list (cons 'disable_grouping t)))))
+
+(defun org-roam-server-color-scheme-fn ()
+  (pcase org-roam-server-color-scheme
+    ("default" default-color-scheme)
+    ("test" test-color-scheme)
+    ((pred functionp)
+     (funcall org-roam-server-color-scheme))))
+
+(defun org-roam-server-change-color-scheme (color-scheme)
+  (setq org-roam-server-color-scheme color-scheme)
+  (org-roam-server-color-scheme-fn))
+
+(defservlet* server-options application/json (token)
+  (if org-roam-server-authenticate
+      (if (not (string= org-roam-server-token token))
+          (httpd-error httpd-current-proc 403)))
+  (insert (or org-roam-server-options "{}")))
+
+
 (define-obsolete-variable-alias 'org-roam-server-label-wrap-length
   'org-roam-server-network-label-wrap-length "org-roam-server 1.0.3")
 (define-obsolete-variable-alias 'org-roam-server-label-truncate
